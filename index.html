@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zero carbon energy scenario progress tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://cdn.plot.ly/plotly-2.18.1.min.js" charset="utf-8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div class="container" style="max-width:1400px" id="app">
+
+        <div class="row">
+            <div class="col">
+                <br>
+                <h3>Zero carbon energy scenario progress tracker</h3>
+                <p>How long will it take to reach key scenario metrics? Are we on track to meet 2050 targets? What kind of deployment rates do we need to get on track?</p>
+
+                <div class="input-group mb-3">
+                  <span class="input-group-text">Select metric</span>
+                  <select class="form-control" v-model="selected_metric" @change="change_metric">
+                    <option value="Onshore wind">Onshore wind generation</option>
+                    <option value="Offshore wind">Offshore wind generation</option>
+                    <option value="Solar photovoltaics">Solar PV generation</option> 
+                    <option value="Wind combined">Combined wind generation</option>
+                    <option value="Wind and solar combined">Combined wind and solar generation</option>
+                </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div id="gd" style="height:650px"></div>
+            </div>  
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <p><b>Linear extrapolation</b></p>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Include data range</span>
+                    <span class="input-group-text">Start</span>
+                    <input type="text" class="form-control" v-model.number="lr_min" @change="update">
+                    <span class="input-group-text">End</span>
+                    <input type="text" class="form-control" v-model.number="lr_max" @change="update">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Deployment rate</span>
+                    <input type="text" class="form-control" :value="'+'+lr_slope.toFixed(1)+'TWh/yr'" disabled>
+                    <span class="input-group-text">Show line</span>
+                    <span class="input-group-text">
+                        <input type="checkbox" v-model="lr_show" @change="update">
+                    </span>
+                </div>
+            </div>
+            <div class="col">
+
+                <table class="table">
+                    <tr>
+                        <th>Scenario</th>
+                        <th>2050 Deployment rate</th>
+                        <th>Multiple</th>
+                        <th>Show line</th>
+                    </tr>
+                    <tr v-for="(rate,index) in deployment_rates_2050">
+                        <td>{{ index }}</td>
+                        <td>{{ rate | toFixed(1) }} TWh/yr</td>
+                        <td>{{ rate / lr_slope | toFixed(1) }}x</td>
+                        <td><input type="checkbox" v-model="show_2050_deployment_line[index]" @change="update"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>
+
+<script>
+    var plot_data = {
+        "data": [],
+        "layout": {
+            "title": {
+                "text": "Historic UK offshore and onshore wind generation compared to future scenario requirements"
+            },
+            "xaxis": {
+                "type": "linear",
+                "dtick": 10,
+                "range": [
+                    1990,
+                    2100
+                ],
+                "title": {
+                    "text": "Year"
+                },
+                "tickmode": "linear",
+                "autorange": false,
+                "tickformat": "",
+                "exponentformat": "none",
+                "separatethousands": false
+            },
+            "yaxis": {
+                "type": "linear",
+                "range": [
+                    0,
+                    1
+                ],
+                "title": {
+                    "text": "Generation (TWh)"
+                },
+                "autorange": false,
+                "exponentformat": "none"
+            },
+            "shapes": [
+                {
+                    "x0": 1990,
+                    "x1": 2100,
+                    "y0": 74.4,
+                    "y1": 74.4,
+                    "line": {
+                        "dash": "dot",
+                        "color": "rgb(250, 4, 4)",
+                        "width": 2
+                    },
+                    "type": "line",
+                    "opacity": 0.3,
+                    "fillcolor": "#7f7f7f"
+                }
+            ],
+            "autosize": true,
+            "template": {
+                "data": {
+                },
+                "layout": {
+                    "font": {
+                        "color": "#2a3f5f"
+                    },
+
+                    "title": {
+                        "x": 0.05
+                    },
+                    "xaxis": {
+                        "ticks": "",
+                        "gridcolor": "#EBF0F8",
+                        "linecolor": "#EBF0F8",
+                        "automargin": true,
+                        "zerolinecolor": "#EBF0F8",
+                        "zerolinewidth": 2
+                    },
+                    "yaxis": {
+                        "ticks": "",
+                        "gridcolor": "#EBF0F8",
+                        "linecolor": "#EBF0F8",
+                        "automargin": true,
+                        "zerolinecolor": "#EBF0F8",
+                        "zerolinewidth": 2
+                    },
+                    "colorway": [
+                        "#636efa",
+                        "#636efa",
+                        "#adb3fc",
+                        "#adb3fc",
+                        "#adb3fc"
+                    ],
+                    "hovermode": "closest",
+                    "colorscale": {
+                    },
+                    "plot_bgcolor": "white",
+                    "paper_bgcolor": "white"
+                }
+            }
+        }
+    }
+
+    var scenario_targets = {
+        "Solar photovoltaics": {
+            "ZeroCarbonBritain": 75,
+            "FES 2022 Leading the way": 95,
+            "100% Renewable UK IAS": 294
+        },
+        "Onshore wind": {
+            "ZeroCarbonBritain": 76,
+            "FES 2022 Leading the way": 153,
+            "100% Renewable UK IAS": 192
+        },
+        "Offshore wind": {
+            "ZeroCarbonBritain": 530,
+            "FES 2022 Leading the way": 454,
+            "100% Renewable UK IAS": 681
+        },
+        "Wind combined": {
+            "ZeroCarbonBritain & FES 2022": 606,
+            "100% Renewable UK IAS": 873
+        },
+        "Wind and solar combined": {
+            "ZeroCarbonBritain & FES 2022": 690,
+            "100% Renewable UK IAS":  1167
+        }
+    }
+
+    var default_lr_ranges = {
+        "Solar photovoltaics": [2010, 2020],
+        "Onshore wind": [2010, 2021],
+        "Offshore wind": [2016, 2020],
+        "Wind combined": [2016, 2020],
+        "Wind and solar combined": [2016, 2020]
+    };
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            selected_metric: "Wind combined",
+            lr_min: default_lr_ranges["Wind combined"][0],
+            lr_max: default_lr_ranges["Wind combined"][1],
+            lr_slope: 0,
+            lr_show: false,
+            deployment_rates_2050: {},
+            show_2050_deployment_line: {}
+        },
+        methods: {
+            change_metric: function () {
+                this.lr_min = default_lr_ranges[this.selected_metric][0];
+                this.lr_max = default_lr_ranges[this.selected_metric][1];
+                draw_graph();
+            },
+            update: function () {
+                draw_graph();
+            }
+        },
+        filters: {
+            toFixed: function (value,dp) {
+                if (typeof value !== "number") {
+                    return value;
+                }
+                return value.toFixed(dp);
+            }
+        }
+    });
+
+    function draw_graph() {
+        x = parsed_csv_data["Year"];
+        y = parsed_csv_data[app.selected_metric];
+
+        plot_data.layout.title.text = "Historic UK "+app.selected_metric.toLowerCase()+" compared to future scenario requirements";
+
+        plot_data.data = [];
+
+        // Historic data
+        plot_data.data.push({
+            x: x,
+            y: y,
+            mode: 'markers',
+            type: 'scatter',
+            name: "Historic"
+        });
+        
+        // Linear regression
+        var lr = linearRegression(x, y, app.lr_min, app.lr_max);
+
+        if (app.lr_show) {
+            plot_data.data.push({
+                x: [app.lr_min, 2100],
+                y: [app.lr_min * lr.slope + lr.offset, 2100 * lr.slope + lr.offset],
+                mode: 'lines',
+                type: 'scatter',
+                name: "Linear"
+            });
+        }
+
+        app.deployment_rates_2050 = {}
+        for (var target in scenario_targets[app.selected_metric]) {
+            let y_start = 2022 * lr.slope + lr.offset
+
+            if (app.show_2050_deployment_line[target]!=undefined && app.show_2050_deployment_line[target]) {
+                plot_data.data.push({
+                    x: [2022, 2050],
+                    y: [y_start, scenario_targets[app.selected_metric][target]],
+                    mode: 'lines',
+                    type: 'scatter',
+                    name: target
+                });
+            }
+            app.deployment_rates_2050[target] = (scenario_targets[app.selected_metric][target] - y_start) / (2050 - 2022); // y[x.indexOf(2021)]
+        }
+
+        app.lr_slope = lr.slope
+
+        // Targets
+        plot_data.layout.annotations = []
+        plot_data.layout.shapes = []
+
+        var targets = scenario_targets[app.selected_metric];
+        // find max target
+        var max_target = 0;
+        for (var target in targets) {
+            if (targets[target] > max_target) {
+                max_target = targets[target];
+            }
+        }
+
+        plot_data.layout.yaxis.range = [0, max_target * 1.2];
+
+        for (var target in targets) {
+            plot_data.layout.shapes.push({
+                x0: 1990,
+                x1: 2100,
+                y0: targets[target],
+                y1: targets[target],
+                line: {
+                    dash: "dot",
+                    color: "rgb(250, 4, 4)",
+                    width: 2
+                },
+                type: "line",
+                opacity: 0.3,
+                fillcolor: "#7f7f7f"
+            });
+            plot_data.layout.annotations.push({
+                x: 2005,
+                y: targets[target] * 1.03,
+                text: target + ": " + targets[target] + " TWh/yr",
+                showarrow: false,
+            });
+        }
+
+        Plotly.newPlot("gd", plot_data);
+    }
+
+    // Load data.csv using axios
+    var parsed_csv_data = {};
+    axios.get('data.csv?v=3')
+        .then(function (response) {
+            // Process data.csv into x and y arrayss
+            var data = response.data;
+            var lines = data.split("\n");
+            parsed_csv_data = {};
+            for (var i = 0; i < lines.length; i++) {
+                var obj = {};
+                var currentline = lines[i].split(",");
+                var title = currentline[0];
+                parsed_csv_data[title] = [];
+                for (var j = 1; j < currentline.length; j++) {
+                    let value = parseFloat(currentline[j]);
+                    if (i!=0) value *= 0.001;
+                    parsed_csv_data[title].push(value);
+                }
+            }
+            draw_graph();
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+
+</script>
+<script src="misc.js?v=3"></script>
