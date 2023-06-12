@@ -12,14 +12,23 @@
 </head>
 
 <body>
-    <div class="container" style="max-width:1400px" id="app">
-
+    <div style="background-color: whitesmoke;">
+    <div class="container" style="max-width:1200px">
         <div class="row">
             <div class="col">
                 <br>
                 <h3>Zero carbon energy scenario progress tracker</h3>
                 <p>How long will it take to reach key scenario metrics? Are we on track to meet 2050 targets? What kind of deployment rates do we need to get on track?</p>
+            </div>
+        </div>
+    </div>
+    </div>
 
+    <div class="container" style="max-width:1200px" id="app">
+
+        <div class="row">
+            <div class="col">
+                <br>
                 <div class="input-group mb-3">
                   <span class="input-group-text">Select metric</span>
                   <select class="form-control" v-model="selected_metric" @change="change_metric">
@@ -35,7 +44,7 @@
 
         <div class="row">
             <div class="col">
-                <div id="gd" style="height:650px"></div>
+                <div id="gd" style="height:550px"></div>
             </div>  
         </div>
 
@@ -43,7 +52,7 @@
             <div class="col-4">
                 <p><b>Linear extrapolation</b></p>
                 <div class="input-group mb-3">
-                    <span class="input-group-text">Include data range</span>
+                    <span class="input-group-text">Include range</span>
                     <span class="input-group-text">Start</span>
                     <input type="text" class="form-control" v-model.number="lr_min" @change="update">
                     <span class="input-group-text">End</span>
