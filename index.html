@@ -40,7 +40,7 @@
         </div>
 
         <div class="row">
-            <div class="col">
+            <div class="col-4">
                 <p><b>Linear extrapolation</b></p>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Include data range</span>
@@ -50,27 +50,29 @@
                     <input type="text" class="form-control" v-model.number="lr_max" @change="update">
                 </div>
                 <div class="input-group mb-3">
-                    <span class="input-group-text">Deployment rate</span>
-                    <input type="text" class="form-control" :value="'+'+lr_slope.toFixed(1)+'TWh/yr'" disabled>
+                    <span class="input-group-text" title="Rate of increase in annual generation">Deployment rate</span>
+                    <input type="text" class="form-control" :value="'+'+lr_slope.toFixed(1)+' TWh/yr'" disabled>
                     <span class="input-group-text">Show line</span>
                     <span class="input-group-text">
                         <input type="checkbox" v-model="lr_show" @change="update">
                     </span>
                 </div>
             </div>
-            <div class="col">
+            <div class="col-8">
 
                 <table class="table">
                     <tr>
                         <th>Scenario</th>
-                        <th>2050 Deployment rate</th>
-                        <th>Multiple</th>
+                        <th title="Rate of increase in annual generation">2050 Deployment rate</th>
+                        <th title="How much we need to increase the rate of increase in annual generation compared to the historic rate.">Rate increase</th>
+                        <th title="Percentage of future scenario requirements generated today">% Progress</th>
                         <th>Show line</th>
                     </tr>
                     <tr v-for="(rate,index) in deployment_rates_2050">
                         <td>{{ index }}</td>
-                        <td>{{ rate | toFixed(1) }} TWh/yr</td>
+                        <td>+{{ rate | toFixed(1) }} TWh/yr</td>
                         <td>{{ rate / lr_slope | toFixed(1) }}x</td>
+                        <td>{{ prc_progress[index] | toFixed(0) }}%</td>
                         <td><input type="checkbox" v-model="show_2050_deployment_line[index]" @change="update"></td>
                     </tr>
                 </table>
@@ -103,7 +105,8 @@
                 "autorange": false,
                 "tickformat": "",
                 "exponentformat": "none",
-                "separatethousands": false
+                "separatethousands": false,
+                "fixedrange": true
             },
             "yaxis": {
                 "type": "linear",
@@ -115,7 +118,8 @@
                     "text": "Generation (TWh)"
                 },
                 "autorange": false,
-                "exponentformat": "none"
+                "exponentformat": "none",
+                "fixedrange": true
             },
             "legend": {
                 "x": 0.83,
@@ -137,6 +141,12 @@
                     "fillcolor": "#7f7f7f"
                 }
             ],
+            "margin": {
+                "t": 30,
+                "b": 0,
+                "l": 0,
+                "r": 0
+            },
             "autosize": true,
             "template": {
                 "data": {
@@ -186,6 +196,7 @@
         "Solar photovoltaics": {
             "ZeroCarbonBritain": 75,
             "FES 2022 Leading the way": 95,
+            "CCC Balanced Pathway": 85,
             "100% Renewable UK IAS": 294
         },
         "Onshore wind": {
@@ -199,10 +210,12 @@
             "100% Renewable UK IAS": 681
         },
         "Wind combined": {
+            "CCC Balanced Pathway": 430,
             "ZeroCarbonBritain & FES 2022": 606,
             "100% Renewable UK IAS": 873
         },
         "Wind and solar combined": {
+            "CCC Balanced Pathway": 515,
             "ZeroCarbonBritain & FES 2022": 690,
             "100% Renewable UK IAS":  1167
         }
@@ -219,12 +232,13 @@
     var app = new Vue({
         el: '#app',
         data: {
-            selected_metric: "Wind combined",
-            lr_min: default_lr_ranges["Wind combined"][0],
-            lr_max: default_lr_ranges["Wind combined"][1],
+            selected_metric: "Wind and solar combined",
+            lr_min: default_lr_ranges["Wind and solar combined"][0],
+            lr_max: default_lr_ranges["Wind and solar combined"][1],
             lr_slope: 0,
             lr_show: false,
             deployment_rates_2050: {},
+            prc_progress: {},
             show_2050_deployment_line: {}
         },
         methods: {
@@ -278,6 +292,7 @@
         }
 
         app.deployment_rates_2050 = {}
+        app.prc_progress = {}
         for (var target in scenario_targets[app.selected_metric]) {
             let y_start = 2022 * lr.slope + lr.offset
 
@@ -291,6 +306,7 @@
                 });
             }
             app.deployment_rates_2050[target] = (scenario_targets[app.selected_metric][target] - y_start) / (2050 - 2022); // y[x.indexOf(2021)]
+            app.prc_progress[target] = (y[x.indexOf(2021)] / scenario_targets[app.selected_metric][target]) * 100;
         }
 
         app.lr_slope = lr.slope
@@ -326,10 +342,11 @@
                 fillcolor: "#7f7f7f"
             });
             plot_data.layout.annotations.push({
-                x: 2005,
+                x: 1992,
                 y: targets[target] * 1.03,
                 text: target + ": " + targets[target] + " TWh/yr",
                 showarrow: false,
+                xanchor: "left"
             });
         }
 
