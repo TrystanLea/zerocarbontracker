@@ -9,6 +9,18 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
     <script src="https://cdn.plot.ly/plotly-2.18.1.min.js" charset="utf-8"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        /* responsive text size */
+        html {
+            font-size: 14px;
+        }
+        @media (min-width: 768px) {
+            html {
+                font-size: 16px;
+            }
+        }
+
+    </style>
 </head>
 
 <body>
@@ -30,7 +42,7 @@
             <div class="col">
                 <br>
                 <div class="input-group mb-3">
-                  <span class="input-group-text">Select metric</span>
+                  <span class="input-group-text">Selected metric</span>
                   <select class="form-control" v-model="selected_metric" @change="change_metric">
                     <option value="Onshore wind">Onshore wind generation</option>
                     <option value="Offshore wind">Offshore wind generation</option>
@@ -44,12 +56,15 @@
 
         <div class="row">
             <div class="col">
-                <div id="gd" style="height:550px"></div>
+
+                <!-- {{ title }} -->
+
+                <div id="plot" style="height:550px"></div>
             </div>  
         </div>
 
         <div class="row">
-            <div class="col-4">
+            <div class="col-sm-4">
                 <p><b>Linear extrapolation</b></p>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Include range</span>
@@ -67,7 +82,7 @@
                     </span>
                 </div>
             </div>
-            <div class="col-8">
+            <div class="col-sm-8">
 
                 <table class="table">
                     <tr>
@@ -96,10 +111,12 @@
 <script>
     var plot_data = {
         "data": [],
+        "config": {
+            displayModeBar: false,
+            responsive: true
+        },
         "layout": {
-            "title": {
-                "text": "Historic UK offshore and onshore wind generation compared to future scenario requirements"
-            },
+            "title": {},
             "xaxis": {
                 "type": "linear",
                 "dtick": 10,
@@ -130,6 +147,7 @@
                 "exponentformat": "none",
                 "fixedrange": true
             },
+            "showlegend": false,
             "legend": {
                 "x": 0.83,
                 "y": 0.95
@@ -151,7 +169,7 @@
                 }
             ],
             "margin": {
-                "t": 30,
+                "t": 10,
                 "b": 0,
                 "l": 0,
                 "r": 0
@@ -199,23 +217,26 @@
                 }
             }
         }
-    }
+    };
+
 
     var scenario_targets = {
         "Solar photovoltaics": {
             "ZeroCarbonBritain": 75,
             "FES 2022 Leading the way": 95,
-            "CCC Balanced Pathway": 85,
+            "CCC Balanced Pathway": 83,
             "100% Renewable UK IAS": 294
         },
         "Onshore wind": {
             "ZeroCarbonBritain": 76,
             "FES 2022 Leading the way": 153,
+            "CCC Balanced Pathway (2040 peak)": 54,
             "100% Renewable UK IAS": 192
         },
         "Offshore wind": {
             "ZeroCarbonBritain": 530,
             "FES 2022 Leading the way": 454,
+            "CCC Balanced Pathway": 407,
             "100% Renewable UK IAS": 681
         },
         "Wind combined": {
@@ -224,7 +245,7 @@
             "100% Renewable UK IAS": 873
         },
         "Wind and solar combined": {
-            "CCC Balanced Pathway": 515,
+            "CCC Balanced Pathway": 514,
             "ZeroCarbonBritain & FES 2022": 690,
             "100% Renewable UK IAS":  1167
         }
@@ -238,12 +259,15 @@
         "Wind and solar combined": [2016, 2020]
     };
 
+    var selected_metric = "Wind and solar combined";
+
     var app = new Vue({
         el: '#app',
         data: {
-            selected_metric: "Wind and solar combined",
-            lr_min: default_lr_ranges["Wind and solar combined"][0],
-            lr_max: default_lr_ranges["Wind and solar combined"][1],
+            selected_metric: selected_metric,
+            title: selected_metric,
+            lr_min: default_lr_ranges[selected_metric][0],
+            lr_max: default_lr_ranges[selected_metric][1],
             lr_slope: 0,
             lr_show: false,
             deployment_rates_2050: {},
@@ -274,7 +298,7 @@
         x = parsed_csv_data["Year"];
         y = parsed_csv_data[app.selected_metric];
 
-        plot_data.layout.title.text = "Historic UK "+app.selected_metric.toLowerCase()+" compared to future scenario requirements";
+        app.title = "Historic UK "+app.selected_metric.toLowerCase()+" compared to future scenario requirements";
 
         plot_data.data = [];
 
@@ -359,7 +383,7 @@
             });
         }
 
-        Plotly.newPlot("gd", plot_data);
+        Plotly.newPlot("plot", plot_data);
     }
 
     // Load data.csv using axios
@@ -381,11 +405,28 @@
                     parsed_csv_data[title].push(value);
                 }
             }
+
+            resize_plot();
             draw_graph();
         })
         .catch(function (error) {
             console.log(error);
         });
 
+    // rezie plot height in proportion to width on window resize
+    window.onresize = function () {
+        resize_plot();
+    };
+
+    function resize_plot() {
+        var plot = document.getElementById("plot");
+        var plot_width = plot.offsetWidth;
+        var plot_height = plot_width * 0.48;
+        if (plot_height < 340) {
+            plot_height = 340;
+        }
+        plot.style.height = plot_height + "px";
+        Plotly.Plots.resize(plot);
+    }
 </script>
 <script src="misc.js?v=3"></script>
