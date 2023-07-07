@@ -96,7 +96,7 @@
                         <td>{{ index }}</td>
                         <td>+{{ rate | toFixed(1) }} TWh/yr</td>
                         <td>{{ rate / lr_slope | toFixed(1) }}x</td>
-                        <td>{{ prc_progress[index] | toFixed(0) }}% ({{ to_build[index] | toFixed(1) }}x)</td>
+                        <td>{{ prc_progress[index] | toFixed(0) }}% <span title="Generation left to build">({{ to_build[index] | toFixed(1) }}x)</span></td>
                         <td><input type="checkbox" v-model="show_2050_deployment_line[index]" @change="update"></td>
                     </tr>
                 </table>
