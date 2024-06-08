@@ -49,6 +49,7 @@
                     <option value="Solar photovoltaics">Solar PV generation</option> 
                     <option value="Wind combined">Combined wind generation</option>
                     <option value="Wind and solar combined">Combined wind and solar generation</option>
+                    <option value="Nuclear">Nuclear generation</option>
                 </select>
                 </div>
             </div>
@@ -248,6 +249,12 @@
             "CCC Balanced Pathway": 514,
             "ZeroCarbonBritain & FES 2022": 690,
             "100% Renewable UK IAS":  1167
+        },
+        "Nuclear": {
+            //"ZeroCarbonBritain": 0,
+            //"100% Renewable UK IAS": 0,
+            "CCC Balanced Pathway": 74.5,
+            "High ambition UK Gov": 315.4
         }
     }
 
@@ -256,7 +263,8 @@
         "Onshore wind": [2010, 2022],
         "Offshore wind": [2016, 2020],
         "Wind combined": [2016, 2020],
-        "Wind and solar combined": [2016, 2020]
+        "Wind and solar combined": [2016, 2020],
+        "Nuclear": [1990,2020]
     };
 
     var selected_metric = "Wind and solar combined";
@@ -298,6 +306,8 @@
     function draw_graph() {
         x = parsed_csv_data["Year"];
         y = parsed_csv_data[app.selected_metric];
+        
+        console.log(y);
 
         app.title = "Historic UK "+app.selected_metric.toLowerCase()+" compared to future scenario requirements";
 
@@ -392,7 +402,7 @@
 
     // Load data.csv using axios
     var parsed_csv_data = {};
-    axios.get('data.csv?v=4')
+    axios.get('data.csv?v=5')
         .then(function (response) {
             // Process data.csv into x and y arrayss
             var data = response.data;
