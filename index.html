@@ -50,6 +50,7 @@
                     <option value="Wind combined">Combined wind generation</option>
                     <option value="Wind and solar combined">Combined wind and solar generation</option>
                     <option value="Nuclear">Nuclear generation</option>
+                    <option value="Electricity consumed">Electricity consumed</option>
                 </select>
                 </div>
             </div>
@@ -255,6 +256,9 @@
             //"100% Renewable UK IAS": 0,
             "CCC Balanced Pathway": 74.5,
             "High ambition UK Gov": 315.4
+        },
+        "Electricity consumed": {
+            "ZeroCarbonBritain": 635
         }
     }
 
@@ -264,7 +268,8 @@
         "Offshore wind": [2016, 2020],
         "Wind combined": [2016, 2020],
         "Wind and solar combined": [2016, 2020],
-        "Nuclear": [1990,2020]
+        "Nuclear": [1990,2020],
+        "Electricity consumed": [1990,2020]
     };
 
     var selected_metric = "Wind and solar combined";
@@ -402,7 +407,7 @@
 
     // Load data.csv using axios
     var parsed_csv_data = {};
-    axios.get('data.csv?v=5')
+    axios.get('data.csv?v=6')
         .then(function (response) {
             // Process data.csv into x and y arrayss
             var data = response.data;
