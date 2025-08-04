@@ -227,35 +227,41 @@
             "ZeroCarbonBritain": 75,
             "FES 2022 Leading the way": 95,
             "CCC Balanced Pathway": 83,
-            "100% Renewable UK IAS": 294
+            "100% Renewable UK IAS": 294,
+            "Green Light UK 2050": 118
         },
         "Onshore wind": {
             "ZeroCarbonBritain": 76,
             "FES 2022 Leading the way": 153,
             "CCC Balanced Pathway (2040 peak)": 54,
-            "100% Renewable UK IAS": 192
+            "100% Renewable UK IAS": 192,
+            "Green Light UK 2050": 40
         },
         "Offshore wind": {
             "ZeroCarbonBritain": 530,
             "FES 2022 Leading the way": 454,
             "CCC Balanced Pathway": 407,
-            "100% Renewable UK IAS": 681
+            "100% Renewable UK IAS": 681,
+            "Green Light UK 2050": 931
         },
         "Wind combined": {
             "CCC Balanced Pathway": 430,
             "ZeroCarbonBritain & FES 2022": 606,
-            "100% Renewable UK IAS": 873
+            "100% Renewable UK IAS": 873,
+            "Green Light UK 2050": 971
         },
         "Wind and solar combined": {
             "CCC Balanced Pathway": 514,
             "ZeroCarbonBritain & FES 2022": 690,
-            "100% Renewable UK IAS":  1167
+            "100% Renewable UK IAS":  1167,
+            "Green Light UK 2050":  1089
         },
         "Nuclear": {
             //"ZeroCarbonBritain": 0,
             //"100% Renewable UK IAS": 0,
             "CCC Balanced Pathway": 74.5,
-            "High ambition UK Gov": 315.4
+            "High ambition UK Gov": 315.4,
+            "Green Light UK 2050": 25
         },
         "Electricity consumed": {
             "ZeroCarbonBritain": 635
@@ -263,13 +269,13 @@
     }
 
     var default_lr_ranges = {
-        "Solar photovoltaics": [2010, 2020],
-        "Onshore wind": [2010, 2022],
-        "Offshore wind": [2016, 2020],
-        "Wind combined": [2016, 2020],
-        "Wind and solar combined": [2016, 2020],
-        "Nuclear": [1990,2020],
-        "Electricity consumed": [1990,2020]
+        "Solar photovoltaics": [2010, 2024],
+        "Onshore wind": [2010, 2024],
+        "Offshore wind": [2016, 2024],
+        "Wind combined": [2016, 2024],
+        "Wind and solar combined": [2016, 2024],
+        "Nuclear": [1998,2024],
+        "Electricity consumed": [1990,2024]
     };
 
     var selected_metric = "Wind and solar combined";
@@ -343,22 +349,22 @@
         app.deployment_rates_2050 = {}
         app.prc_progress = {}
         for (var target in scenario_targets[app.selected_metric]) {
-            let y_start = 2022 * lr.slope + lr.offset
+            let y_start = 2024 * lr.slope + lr.offset
 
             if (app.show_2050_deployment_line[target]!=undefined && app.show_2050_deployment_line[target]) {
                 plot_data.data.push({
-                    x: [2022, 2050],
+                    x: [2024, 2050],
                     y: [y_start, scenario_targets[app.selected_metric][target]],
                     mode: 'lines',
                     type: 'scatter',
                     name: target
                 });
             }
-            app.deployment_rates_2050[target] = (scenario_targets[app.selected_metric][target] - y_start) / (2050 - 2022); // y[x.indexOf(2021)]
-            app.prc_progress[target] = (y[x.indexOf(2022)] / scenario_targets[app.selected_metric][target]) * 100;
+            app.deployment_rates_2050[target] = (scenario_targets[app.selected_metric][target] - y_start) / (2050 - 2024); // y[x.indexOf(2021)]
+            app.prc_progress[target] = (y[x.indexOf(2024)] / scenario_targets[app.selected_metric][target]) * 100;
             
             
-            app.to_build[target] = (scenario_targets[app.selected_metric][target] / y[x.indexOf(2022)]) - 1
+            app.to_build[target] = (scenario_targets[app.selected_metric][target] / y[x.indexOf(2024)]) - 1
         }
 
         app.lr_slope = lr.slope
